@@ -1,5 +1,5 @@
 #----- Instalación e importación de librerias necesarias para correr el programa ----#
-for (libreria in c("rela","psych","FactoMineR","cluster","mclust","fpc")) {
+for (libreria in c("rela","psych","FactoMineR","cluster","mclust","fpc","plyr")) {
   if (!require(libreria, character.only=T)) {
     install.packages(libreria)
     library(libreria, character.only=T)
@@ -57,14 +57,47 @@ BF_Clean$Stay_In_Current_City_Years <- as.numeric(BF_Clean$Stay_In_Current_City_
 #Las categorías de producto 2 y 3 contienen NAs y valores que pueden encontrarse en la categoría 1 por lo que se eliminan las columnas
 BF_Clean <- subset(BF_Clean, select = -c(Product_Category_2,Product_Category_3))
 
+#BF_Clean$Purchase_Avg <- merge(BF_Clean, ddply(BF_Clean, .(Product_ID), summarize, Purchase_Avg = mean(Purchase)), by = "Product_ID")
+
 #-------------------------- Análisis de Correlación -------------------------------#
 #Se realiza el analisis de correlacion de pearson para las variables numericas, sin los IDs
 BF_Cor <- cor(BF_Clean[,c(3:10)],use = "pairwise.complete.obs")
 View(BF_Cor)
 
 #----------------------------- Análisis Gráfico -----------------------------------#
-#graficar frecuencias de variables en barras y circulares
+#Graficar frecuencias de variables en histogramas y caja y bigotes
 for (i in 3:ncol(BF_Clean)){
   hist(BF_Clean[,i], freq = T, main = paste("Histograma de", names(BF_Clean[i])))
   boxplot(BF_Clean[,i], xlab =  names(BF_Clean[i]), main = paste("Caja y Bigotes de", names(BF_Clean[i])))
 }
+
+#---------------------------------- PCA -------------------------------------------#
+#Se debe analizar si se puede usar el análisis factorial para formar las combinaciones lineales de las variables
+BF_paf <- paf(as.matrix(BF_Clean[,3:10]))
+BF_paf$KMO #0.51 La adecuación a la muestra es mala, pero aceptable
+BF_paf$Bartlett #140362
+
+#Nivel de significación de la prueba
+cortest.bartlett(BF_Clean[,3:10])
+#El valor p es de 0, lo que indica que el análisis factorial puede funcionar
+
+#Normalización de datos
+CP <- prcomp(BF_Clean[,3:10], scale = T)
+CP
+
+summary(CP)
+
+CP_PCA <- PCA(BF_Clean[,3:10],ncp=ncol(BF_Clean[,3:10]), scale.unit = T)
+summary(CP_PCA)
+
+#------------------------------- Clustering --------------------------------------#
+
+#Método de Ward para determinar el número correcto de clusteres con k-medias
+wss <- (nrow(BF_Clean[,3:10])-1)*sum(apply(BF_Clean[,3:10],2,var))
+
+for (i in 3:10) 
+  wss[i] <- sum(kmeans(BF_Clean[,3:10], centers=i)$withinss)
+
+plot(3:10, wss, type="b", xlab="Number of Clusters",  ylab="Within groups sum of squares")
+
+# En base a la gráfica generada por el código anterior, se determina que se necesitan 3 clusters
