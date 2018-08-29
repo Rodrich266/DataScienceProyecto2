@@ -65,8 +65,14 @@ BF_Cor <- cor(BF_Clean[,c(3:10)],use = "pairwise.complete.obs")
 View(BF_Cor)
 
 #----------------------------- Análisis Gráfico -----------------------------------#
-#Graficar frecuencias de variables en histogramas y caja y bigotes
-for (i in 3:ncol(BF_Clean)){
+#Graficar frecuencias de variables categóricas en diagramas de barras y circulares
+for (i in 3:9){
+  barplot(table(BF_Clean[i]),main = paste("Diagrama de barras de", names(BF_Clean[i])))
+  pie(table(BF_Clean[i]),main = paste("Diagrama circular de", names(BF_Clean[i])))
+}
+
+#Graficar frecuencias de variables cuantitativas en histogramas y caja y bigotes
+for (i in 9:ncol(BF_Clean)){
   hist(BF_Clean[,i], freq = T, main = paste("Histograma de", names(BF_Clean[i])))
   boxplot(BF_Clean[,i], xlab =  names(BF_Clean[i]), main = paste("Caja y Bigotes de", names(BF_Clean[i])))
 }
