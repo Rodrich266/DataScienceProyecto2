@@ -1,5 +1,5 @@
 #----- Instalación e importación de librerias necesarias para correr el programa ----#
-for (libreria in c("plyr","ggplot2","class","caret","e1071")) {
+for (libreria in c("rela","psych","FactoMineR","cluster","mclust","fpc")) {
   if (!require(libreria, character.only=T)) {
     install.packages(libreria)
     library(libreria, character.only=T)
@@ -56,3 +56,15 @@ BF_Clean$Stay_In_Current_City_Years <- as.numeric(BF_Clean$Stay_In_Current_City_
 
 #Las categorías de producto 2 y 3 contienen NAs y valores que pueden encontrarse en la categoría 1 por lo que se eliminan las columnas
 BF_Clean <- subset(BF_Clean, select = -c(Product_Category_2,Product_Category_3))
+
+#-------------------------- Análisis de Correlación -------------------------------#
+#Se realiza el analisis de correlacion de pearson para las variables numericas, sin los IDs
+BF_Cor <- cor(BF_Clean[,c(3:10)],use = "pairwise.complete.obs")
+View(BF_Cor)
+
+#----------------------------- Análisis Gráfico -----------------------------------#
+#graficar frecuencias de variables en barras y circulares
+for (i in 3:ncol(BF_Clean)){
+  hist(BF_Clean[,i], freq = T, main = paste("Histograma de", names(BF_Clean[i])))
+  boxplot(BF_Clean[,i], xlab =  names(BF_Clean[i]), main = paste("Caja y Bigotes de", names(BF_Clean[i])))
+}
