@@ -87,7 +87,7 @@ BF_paf$Bartlett #140362
 cortest.bartlett(BF_Clean[,3:10])
 #El valor p es de 0, lo que indica que el análisis factorial puede funcionar
 
-#Normalización de datos
+#Normalización de datos y organización de componentes principales
 CP <- prcomp(BF_Clean[,3:10], scale = T)
 CP
 
@@ -99,25 +99,57 @@ summary(CP_PCA)
 #------------------------------- Clustering --------------------------------------#
 
 #Método de Ward para determinar el número correcto de clusteres con k-medias
-wss <- (nrow(BF_Clean[,3:10])-1)*sum(apply(BF_Clean[,3:10],2,var))
+wss <- (nrow(BF_Clean[,3:10]))*sum(apply(BF_Clean[,3:10],2,var))
 
-for (i in 3:10) 
+for (i in 1:10) 
   wss[i] <- sum(kmeans(BF_Clean[,3:10], centers=i)$withinss)
 
-plot(3:10, wss, type="b", xlab="Number of Clusters",  ylab="Within groups sum of squares")
+plot(1:10, wss, type="b", xlab="Number of Clusters",  ylab="Within groups sum of squares")
 
-# En base a la gráfica generada por el código anterior, se determina que se necesitan 3 clusters
+#En base a la gráfica generada por el código anterior, se determina que se necesitan 3 o 2 clusters
 
+#Se utilizará el método de k-medias con k = 3
+km<-kmeans(BF_Clean[,3:10],3)
+BF_Clean$grupo<-km$cluster
 
-#----------------------------- Agrupamiento -------------------------------------*
-km<-kmeans(BF_Clean[,c("Occupation","Purchase")], 3, iter.max = 10)
+g1k<- BF_Clean[BF_Clean$grupo==1,]
 
-km$cluster <- as.factor(km$cluster)
+g2k<- BF_Clean[BF_Clean$grupo==2,]
 
-ggplot(BF_Clean, aes(Occupation, Purchase, color = km$cluster)) + geom_point()
+g3k<- BF_Clean[BF_Clean$grupo==3,]
 
+#se grafica la ubicación de los clusters
+plotcluster(BF_Clean[,3:10],km$cluster)
 
+#---------------------------------- Silueta ---------------------------------------#
+#Ya que se cuentan con muchos datos, se selecciona solamente una muestra aleatoria para este método
 
-#---------------------------- Silueta -------------------------------------------*
-fviz_nbclust(BF_Clean[c(1:20000),c(3:10)], kmeans, method = "silhouette")
+set.seed(123) #Se especifica una semilla para que la aleatoriedad sea reproducible
 
+porciento <- 5/100 #Porciento en el que se partirán los datos
+muestra <- as.matrix(sample(1:nrow(BF_Clean[,3:10]),porciento*nrow(BF_Clean[,3:10])))#Muestra aleatoria de numeros de un vector
+
+#Método de la silueta para las k-medias
+fviz_nbclust(muestra, kmeans, method = "silhouette")
+
+#Se obtiene una k óptima de 2, por lo que se realiza una nueva agrupación
+
+#------------------------------- Clustering Final --------------------------------------#
+#Se utilizará el método de k-medias con k = 2
+km<-kmeans(BF_Clean[,3:10], 2)
+BF_Clean$grupo<-km$cluster
+
+g1k<- BF_Clean[BF_Clean$grupo==1,]
+
+g2k<- BF_Clean[BF_Clean$grupo==2,]
+
+g3k<- NULL #Se borra el cluster que no se utilizará
+
+#se grafica la ubicación de los clusters
+plotcluster(BF_Clean[,3:10],km$cluster)
+
+#--------------------------- Clasificación de Clusters ---------------------------------#
+
+#Con los dos grupos definidos, se analizan los resumenes de estos
+summary(g1k)
+summary(g2k)
