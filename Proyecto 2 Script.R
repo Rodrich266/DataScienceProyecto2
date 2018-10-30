@@ -1,5 +1,6 @@
+
 #----- Instalación e importación de librerias necesarias para correr el programa ----#
-for (libreria in c("rela","psych","FactoMineR","cluster","mclust","fpc","plyr","ggplot2","tidyverse","factoextra")) {
+for (libreria in c("rela","psych","FactoMineR","cluster","mclust","fpc","plyr","ggplot2","tidyverse","factoextra","earth")) {
   if (!require(libreria, character.only=T)) {
     install.packages(libreria)
     library(libreria, character.only=T)
@@ -153,3 +154,13 @@ plotcluster(BF_Clean[,3:10],km$cluster)
 #Con los dos grupos definidos, se analizan los resumenes de estos
 summary(g1k)
 summary(g2k)
+
+
+#--------------------------- Modelo MARS ---------------------------------#
+mars<-earth(grupo~Product_Category_1 + Purchase, data = BF_Clean, pmethod = "backward",
+            nprune = 20, nfold = 10);
+
+summary(mars, digit = 3);
+plotd(mars)
+
+
