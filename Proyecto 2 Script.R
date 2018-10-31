@@ -1,6 +1,5 @@
-
 #----- Instalación e importación de librerias necesarias para correr el programa ----#
-for (libreria in c("rela","psych","FactoMineR","cluster","mclust","fpc","plyr","ggplot2","tidyverse","factoextra","earth")) {
+for (libreria in c("rela","psych","FactoMineR","cluster","mclust","fpc","plyr","ggplot2","tidyverse","factoextra","h2o","earth")) {
   if (!require(libreria, character.only=T)) {
     install.packages(libreria)
     library(libreria, character.only=T)
@@ -62,14 +61,13 @@ BF_Clean <- subset(BF_Clean, select = -c(Product_Category_2,Product_Category_3))
 
 #-------------------------- Análisis de Correlación -------------------------------#
 #Se realiza el analisis de correlacion de pearson para las variables numericas, sin los IDs
-BF_Cor <- cor(BF_Clean[,c(3:10)],use = "pairwise.complete.obs")
+BF_Cor <- cor(BF_Clean[,c(3:10)],use = "pairwise.complete.obs", method = "spearman")
 View(BF_Cor)
 
 #----------------------------- Análisis Gráfico -----------------------------------#
-#Graficar frecuencias de variables categóricas en diagramas de barras y circulares
+#Graficar frecuencias de variables categóricas en diagramas de barras
 for (i in 3:9){
   barplot(table(BF_Clean[i]),main = paste("Diagrama de barras de", names(BF_Clean[i])))
-  pie(table(BF_Clean[i]),main = paste("Diagrama circular de", names(BF_Clean[i])))
 }
 
 #Graficar frecuencias de variables cuantitativas en histogramas y caja y bigotes
@@ -155,12 +153,10 @@ plotcluster(BF_Clean[,3:10],km$cluster)
 summary(g1k)
 summary(g2k)
 
+#-------------------------------- Modelo MARS ------------------------------------------#
 
-#--------------------------- Modelo MARS ---------------------------------#
 mars<-earth(grupo~Product_Category_1 + Purchase, data = BF_Clean, pmethod = "backward",
-            nprune = 20, nfold = 10);
+            nprune = 20, nfold = 10)
 
-summary(mars, digit = 3);
+summary(mars, digit = 3)
 plotd(mars)
-
-
